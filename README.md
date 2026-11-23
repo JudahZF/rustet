@@ -149,10 +149,10 @@ It uses the static AppImage runtime, so it needs no `libfuse2`. If mounting fail
 The repository is a flake with `packages.<system>.rustet` for `x86_64-linux` and `aarch64-linux`. The libhybris builds are in Git LFS, so ask for LFS in the URL:
 
 ```bash
-nix run 'git+https://github.com/JudahZF/rustet?ref=main&lfs=1'
+nix run 'git+https://github.com/JudahZF/rustet.git?ref=main&lfs=1'
 ```
 
-In a NixOS flake, add the input `rustet.url = "git+https://github.com/JudahZF/rustet?ref=main&lfs=1";` and put `inputs.rustet.packages.${pkgs.stdenv.hostPlatform.system}.rustet` in `environment.systemPackages`.
+In a NixOS flake, add the input `rustet.url = "git+https://github.com/JudahZF/rustet.git?ref=main&lfs=1";` and put `inputs.rustet.packages.${pkgs.stdenv.hostPlatform.system}.rustet` in `environment.systemPackages`.
 
 Prebuilt binaries for `x86_64-linux` and `aarch64-linux` are published to the signed binary cache on GitHub Pages so you do not have to build from source:
 
