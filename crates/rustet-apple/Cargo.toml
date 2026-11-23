@@ -1,0 +1,29 @@
+[package]
+name = "rustet-apple"
+description = "Apple Music media provider: catalog to HLS to playable sessions."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rustet-ampapi = { path = "../rustet-ampapi" }
+rustet-core = { path = "../rustet-core" }
+rustet-fairplay = { path = "../rustet-fairplay" }
+rustet-hls = { path = "../rustet-hls" }
+rustet-streams = { path = "../rustet-streams" }
+rustet-widevine = { path = "../rustet-widevine" }
+async-trait.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+wiremock = "0.6"

@@ -1,0 +1,35 @@
+[package]
+name = "rustet-streams"
+description = "AAC and music-video (Widevine) streams: segment download, key acquisition, sample decryption, fragment indexing and the licence provider."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rustet-core = { path = "../rustet-core" }
+rustet-hls = { path = "../rustet-hls" }
+rustet-mp4 = { path = "../rustet-mp4" }
+rustet-widevine = { path = "../rustet-widevine" }
+async-trait.workspace = true
+bytes.workspace = true
+dirs = "6"
+futures.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+sha2 = "0.11"
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+rustet-mp4 = { path = "../rustet-mp4", features = ["test-util"] }
+# The libvlc proof of the AAC init length (`tests/vlc_live.rs`, ignored by default).
+rustet-vlc = { path = "../rustet-vlc" }
+serde_json.workspace = true
+tempfile = "3"
+wiremock = "0.6"

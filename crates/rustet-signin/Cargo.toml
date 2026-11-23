@@ -1,0 +1,33 @@
+[package]
+name = "rustet-signin"
+description = "The Apple Music web sign-in window: a small web view that captures the music user token."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+tao = "0.37"
+url = "2"
+wry = "0.57"
+
+[target.'cfg(unix)'.dependencies]
+signal-hook = "0.4"
+
+[dev-dependencies]
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# examples/check_token.rs: one API call with a captured token.
+rustet-ampapi = { path = "../rustet-ampapi" }
+reqwest.workspace = true
+tokio.workspace = true
+
+# The same webkit2gtk wry 0.57 uses, for WebKit settings wry does not expose.
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = { version = "2.0.2", features = ["v2_40"] }

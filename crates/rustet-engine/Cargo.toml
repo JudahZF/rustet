@@ -1,0 +1,72 @@
+[package]
+name = "rustet-engine"
+description = "The Rustet engine: local HTTPS API server and request handlers."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rustet-ampapi = { path = "../rustet-ampapi" }
+rustet-apple = { path = "../rustet-apple" }
+rustet-core = { path = "../rustet-core" }
+rustet-diskcache = { path = "../rustet-diskcache" }
+rustet-drm = { path = "../rustet-drm" }
+rustet-export = { path = "../rustet-export" }
+rustet-fairplay = { path = "../rustet-fairplay" }
+rustet-framering = { path = "../rustet-framering" }
+rustet-library = { path = "../rustet-library" }
+rustet-mp4 = { path = "../rustet-mp4" }
+rustet-playback = { path = "../rustet-playback" }
+rustet-player = { path = "../rustet-player" }
+rustet-streams = { path = "../rustet-streams" }
+rustet-vlc = { path = "../rustet-vlc" }
+anyhow.workspace = true
+async-trait.workspace = true
+axum = { version = "0.8", default-features = false, features = ["http1", "http2", "json", "query", "tokio"] }
+base64 = "0.22"
+bytes.workspace = true
+futures.workspace = true
+hyper = { version = "1", features = ["http1", "http2", "server"] }
+hyper-util = { version = "0.1", features = ["server-auto", "server-graceful", "service", "tokio"] }
+rcgen = { version = "0.14", default-features = false, features = ["aws_lc_rs", "pem"] }
+regex = "1"
+reqwest.workspace = true
+rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs", "logging", "std", "tls12"] }
+serde.workspace = true
+serde_json.workspace = true
+sha2 = "0.10"
+subtle = "2"
+time = { version = "0.3", features = ["std"] }
+thiserror.workspace = true
+tokio.workspace = true
+tokio-rustls = { version = "0.26", default-features = false, features = ["aws_lc_rs", "logging", "tls12"] }
+tokio-util.workspace = true
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["fs"] }
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", default-features = false, features = ["ansi", "env-filter", "fmt", "std"] }
+url = "2"
+
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1", features = ["process"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_NetworkManagement_IpHelper",
+    "Win32_Networking_WinSock",
+    "Win32_Security",
+    "Win32_System_RemoteDesktop",
+    "Win32_System_Threading",
+] }
+
+[dev-dependencies]
+rustet-mp4 = { path = "../rustet-mp4", features = ["test-util"] }
+tokio = { workspace = true, features = ["test-util"] }
+http-body-util = "0.1"
+tempfile = "3"
+wiremock = "0.6"

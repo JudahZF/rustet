@@ -1,0 +1,22 @@
+[package]
+name = "rustet"
+description = "Rustet, an Apple Music desktop client for Linux and Windows."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rustet-engine = { path = "../rustet-engine" }
+rustet-ui-pages = { path = "../rustet-ui-pages" }
+rustet-ui-panels = { path = "../rustet-ui-panels" }
+rustet-ui-shell = { path = "../rustet-ui-shell" }
+anyhow.workspace = true
+tokio.workspace = true
+
+[features]
+# `rustet --scenario tour|a11y|idle`: the headless checks (crates/rustet-ui-shell/README.md).
+scenario = ["rustet-ui-shell/scenario"]

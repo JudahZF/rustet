@@ -1,0 +1,24 @@
+[package]
+name = "rustet-player"
+description = "The player controller: queue, playback state machine, quality choice, end-of-track rules, history and resume."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+fastrand = "2"
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["sync", "time", "macros", "rt"] }
+tokio-util.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+proptest = "1"
+tokio = { workspace = true, features = ["test-util", "rt-multi-thread"] }

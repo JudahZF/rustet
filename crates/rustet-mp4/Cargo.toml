@@ -1,0 +1,27 @@
+[package]
+name = "rustet-mp4"
+description = "ISO BMFF (MP4 / fragmented MP4) box parsing and rewriting used by the stream decryptors."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+# Builders for synthetic init segments and fragments (test fixtures in other crates).
+test-util = []
+
+[dependencies]
+aes = "0.9"
+cbc = "0.2"
+ctr = "0.10"
+thiserror.workspace = true
+tokio = { workspace = true }
+
+[dev-dependencies]
+sha2 = "0.11"
+tokio = { workspace = true }
+# The builders are needed by this crate's own integration tests.
+rustet-mp4 = { path = ".", features = ["test-util"] }

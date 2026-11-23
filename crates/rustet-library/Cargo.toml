@@ -1,0 +1,27 @@
+[package]
+name = "rustet-library"
+description = "Encrypted local library cache backed by SQLite."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+aes-gcm = "0.11.1"
+chrono = { version = "0.4.45", default-features = false, features = ["clock", "std"] }
+getrandom = "0.4.3"
+reqwest.workspace = true
+rusqlite = { version = "0.43.0", features = ["bundled", "fallible_uint"] }
+serde.workspace = true
+serde_json.workspace = true
+tempfile = "3.27.0"
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+wiremock = "0.6.5"

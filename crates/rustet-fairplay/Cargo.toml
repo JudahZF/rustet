@@ -1,0 +1,28 @@
+[package]
+name = "rustet-fairplay"
+description = "Lossless (FairPlay) streams: the CBCS fragment decryption pipeline and ALAC sample decryption through the DRM connection."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rustet-core = { path = "../rustet-core" }
+rustet-hls = { path = "../rustet-hls" }
+rustet-mp4 = { path = "../rustet-mp4" }
+async-trait.workspace = true
+futures.workspace = true
+reqwest.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+rustet-mp4 = { path = "../rustet-mp4", features = ["test-util"] }
+aes = "0.9"
+cbc = "0.2"
+tokio = { workspace = true, features = ["test-util"] }

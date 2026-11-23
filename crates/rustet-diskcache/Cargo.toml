@@ -1,0 +1,19 @@
+[package]
+name = "rustet-diskcache"
+description = "Disk cache with LRU eviction for stream segments."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+bytes.workspace = true
+futures.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

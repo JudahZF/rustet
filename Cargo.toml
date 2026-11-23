@@ -1,0 +1,65 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/JudahZF/rustet"
+
+# Shared versions. A crate that needs one of these writes `name.workspace = true`.
+# Crate-specific dependencies go in that crate's own Cargo.toml.
+[workspace.dependencies]
+anyhow = "1"
+async-trait = "0.1"
+bytes = "1"
+futures = "0.3"
+# gpui from Zed's repository, pinned to the commit of a Zed stable release tag (v1.29.2).
+# gpui has no API stability promise: move the pin on purpose (see crates/rustet-ui/README.md).
+# The forks Zed patches in are repeated in [patch.crates-io] below.
+gpui = { git = "https://github.com/zed-industries/zed", rev = "2de9e435a5d98657f35c260b5f4dd0979df659e6", version = "0.2.2" }
+gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "2de9e435a5d98657f35c260b5f4dd0979df659e6" }
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "http2", "json", "stream", "gzip", "query", "form"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["io", "rt"] }
+tracing = "0.1"
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+
+# xattr 0.2.3 (gpui 0.2.2 → gpui_http_client → zed-async-tar) does not compile against
+# libc >= 0.2.190, which no longer defines ENOATTR on Linux. Remove with the gpui upgrade.
+[patch."https://github.com/zed-industries/zed"]
+# gpui_wgpu at the gpui pin with one change: the wgpu instance reads WGPU_* variables, so that
+# WGPU_ALLOW_UNDERLYING_NONCOMPLIANT_ADAPTER=1 can enable Mesa's Asahi Vulkan driver (the app
+# sets it on Apple Silicon Linux). Move it together with the pin: third_party/gpui_wgpu/README.md.
+gpui_wgpu = { path = "third_party/gpui_wgpu" }
+
+[patch.crates-io]
+# Zed patches these crates in its own workspace; a git dependency does not inherit [patch], so
+# rustet-ui's gpui (Zed v1.29.2) needs them repeated here, at the revisions Zed's Cargo.toml at
+# that tag uses. Update them together with the gpui pin in crates/rustet-ui/Cargo.toml.
+async-process = { git = "https://github.com/zed-industries/async-process.git", rev = "0b6d6713570af61806e1e5cb40e0f757cb93fd9d" }
+async-task = { git = "https://github.com/zed-industries/async-task.git", rev = "015845a19fc31752c02367567d3b8900a406f9da" }
+calloop = { git = "https://github.com/zed-industries/calloop", rev = "3759371fee14c40066d64777e2a36b6ffcc22590" }
+khronos-egl = { git = "https://github.com/zed-industries/khronos-egl", rev = "42214b36347b108fd9630ca6254b96dde59e04fe" }
+windows-capture = { git = "https://github.com/zed-industries/windows-capture.git", rev = "f0d6c1b6691db75461b732f6d5ff56eed002eeb9" }
+
+# Full debug info made target/ grow past 150 GB (each UI binary was 1 GB). Line tables keep
+# file and line in backtraces; dependencies get no debug info.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
+[profile.release]
+lto = "thin"
+strip = true

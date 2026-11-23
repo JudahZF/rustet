@@ -1,0 +1,34 @@
+[package]
+name = "rustet-widevine"
+description = "Widevine CDM and key requests for AAC streams."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rustet-core = { path = "../rustet-core" }
+aes = "0.9"
+base64 = "0.23"
+cbc = { version = "0.2", features = ["alloc"] }
+cmac = "0.8"
+gethostname = "1"
+prost = "0.14"
+rand = "0.10"
+reqwest.workspace = true
+rsa = "0.10"
+serde.workspace = true
+serde_json.workspace = true
+tempfile = "3"
+sha1 = "0.11"
+sha2 = "0.11"
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+wiremock = "0.6"

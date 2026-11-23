@@ -1,0 +1,175 @@
+name: CI
+
+# Checks the Rust workspace and builds the Nix package, on x86-64 and aarch64.
+# Unfinished work is skipped: draft pull requests, pull requests titled "[WIP] ..." or "WIP: ...", and pushes whose
+# message contains "[wip]". A commit message containing "[skip ci]" is skipped by GitHub itself.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NIX_CACHE_URL: https://judahzf.github.io/rustet
+  NIX_CACHE_KEY_NAME: judahzf.github.io-rustet-1
+  NIX_CACHE_PUBLIC_KEY: judahzf.github.io-rustet-1:a2doMiXEsZ/qMwXqkD5gs5XynSz3AKf9TNXS6IUarvE=
+
+jobs:
+  rust:
+    name: Rust (${{ matrix.arch }})
+    if: >-
+      ${{ !(github.event_name == 'pull_request' && (github.event.pull_request.draft || contains(github.event.pull_request.title, '[WIP]') || startsWith(github.event.pull_request.title, 'WIP:')))
+      && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[wip]')) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false # the tests do not load libhybris or FFmpeg
+      - uses: cachix/install-nix-action@v31
+      # The flake's development shell: the Rust toolchain and the libraries gpui and libvlc need.
+      - name: Enter the development shell
+        run: nix develop --command true
+      - uses: Swatinem/rust-cache@v2
+      - name: rustfmt
+        run: nix develop --command cargo fmt --all --check
+      # rustet-signin is left out: it needs WebKitGTK, which the shell does not carry.
+      - name: clippy
+        run: nix develop --command cargo clippy --workspace --exclude rustet-signin --all-targets -- -D warnings
+      - name: clippy (UI test and scenario code)
+        run: >-
+          nix develop --command cargo clippy -p rustet-ui -p rustet-ui-shell -p rustet-ui-pages -p rustet-ui-panels --all-targets
+          --features rustet-ui/test-support,rustet-ui-shell/test-support,rustet-ui-shell/scenario,rustet-ui-panels/test-support
+          -- -D warnings
+      - name: tests
+        run: nix develop --command cargo test --workspace --exclude rustet-signin
+      - name: UI view tests
+        run: >-
+          nix develop --command cargo test -p rustet-ui -p rustet-ui-shell -p rustet-ui-pages -p rustet-ui-panels
+          --features rustet-ui/test-support,rustet-ui-shell/test-support,rustet-ui-panels/test-support
+      - name: shellcheck
+        run: nix develop --command shellcheck scripts/*.sh
+
+  package:
+    name: Nix package (${{ matrix.arch }})
+    if: >-
+      ${{ !(github.event_name == 'pull_request' && (github.event.pull_request.draft || contains(github.event.pull_request.title, '[WIP]') || startsWith(github.event.pull_request.title, 'WIP:')))
+      && !(github.event_name == 'push' && contains(github.event.head_commit.message, '[wip]')) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+            hybris: packaging/hybris-x86_64/libhybris-core.so,packaging/hybris-x86_64/hybris-linker/q.so
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+            hybris: packaging/hybris-aarch64/libhybris-core.so,packaging/hybris-aarch64/hybris-linker/q.so
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      # Only this CPU's libhybris: a full LFS checkout would spend the LFS bandwidth quota on FFmpeg.
+      - name: Fetch libhybris (Git LFS)
+        run: git lfs pull --include "${{ matrix.hybris }}"
+      - uses: cachix/install-nix-action@v31
+      # path: takes the working tree as it is, with the LFS files in place.
+      # Pull from our own cache too so docs/CI-only pushes do not recompile Rust.
+      - name: nix build
+        run: >-
+          nix build "path:$PWD#rustet" -L
+          --option extra-substituters "$NIX_CACHE_URL"
+          --option extra-trusted-public-keys "$NIX_CACHE_PUBLIC_KEY"
+      - name: The package has its files
+        run: |
+          test -x result/bin/rustet
+          for f in rustet libhybris-core.so hybris-linker/q.so fetch-fairplay-libs.sh fairplay-libs.lock \
+                   android-stubs/libandroid.so android-stubs/libOpenSLES.so android-stubs/libdl.so; do
+            test -e "result/libexec/rustet/$f" || { echo "missing $f"; exit 1; }
+          done
+          ldd result/libexec/rustet/libhybris-core.so result/libexec/rustet/hybris-linker/q.so | grep 'not found' && exit 1 || true
+      - name: Export signed binary cache slice
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+        env:
+          NIX_CACHE_SIGNING_KEY: ${{ secrets.NIX_CACHE_SIGNING_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$NIX_CACHE_SIGNING_KEY" ]; then
+            echo "NIX_CACHE_SIGNING_KEY secret is not set; skipping cache export."
+            exit 1
+          fi
+          key_file="$RUNNER_TEMP/nix-cache.sec"
+          umask 077
+          printf '%s\n' "$NIX_CACHE_SIGNING_KEY" > "$key_file"
+          trap 'rm -f "$key_file"' EXIT
+          command -v zstd >/dev/null || { sudo apt-get update && sudo apt-get install -y --no-install-recommends zstd; }
+          python3 scripts/nix-cache.py export-slice \
+            --store-path "$(readlink -f result)" \
+            --key-file "$key_file" \
+            --key-name "$NIX_CACHE_KEY_NAME" \
+            --public-key "$NIX_CACHE_PUBLIC_KEY" \
+            --out-dir "$RUNNER_TEMP/cache-slice" \
+            --arch "${{ matrix.arch }}-linux" \
+            --commit "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v4
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+        with:
+          name: nix-cache-${{ matrix.arch }}
+          path: ${{ runner.temp }}/cache-slice
+          retention-days: 1
+          if-no-files-found: error
+
+  publish-cache:
+    name: Publish Nix binary cache
+    needs: package
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: nix-cache-*
+          path: ${{ runner.temp }}/slices
+      - name: Assemble binary cache site
+        run: |
+          python3 scripts/nix-cache.py merge-site \
+            --site-dir "$RUNNER_TEMP/site" \
+            --slice "$RUNNER_TEMP/slices/nix-cache-x86_64" \
+            --slice "$RUNNER_TEMP/slices/nix-cache-aarch64" \
+            --cache-url "$NIX_CACHE_URL" \
+            --public-key "$NIX_CACHE_PUBLIC_KEY" \
+            --max-per-arch 8
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/site
+      - id: deployment
+        uses: actions/deploy-pages@v4

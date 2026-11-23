@@ -1,0 +1,25 @@
+[package]
+name = "rustet-core"
+description = "Shared engine foundations: media pipeline types, provider traits, app directories, config and small containers."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+async-trait.workspace = true
+dirs = "6"
+futures.workspace = true
+serde.workspace = true
+serde-saphyr = { version = "2.2", default-features = false, features = ["deserialize"] }
+thiserror.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+sha2 = "0.10"
+tempfile = "3"

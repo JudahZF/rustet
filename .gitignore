@@ -1,0 +1,28 @@
+# ── Build outputs ─────────────────────────────────────────────────────────────
+/target/
+/result
+/result-*
+# scripts/build-package.sh, build-installer.sh and build-appimage.sh
+dist/
+*.AppImage
+*.run
+# scripts/build-ffmpeg.sh work directory
+.ffmpeg-build/
+
+# ── Apple's FairPlay libraries and session files ──────────────────────────────
+# Proprietary: never committed. The app downloads the libraries at run time.
+/drm/
+
+# ── Local notes and tooling ───────────────────────────────────────────────────
+docs/
+.claude/
+CLAUDE.md
+context.md
+/.mcp.json
+
+# ── Editors and OS ────────────────────────────────────────────────────────────
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/settings.json

@@ -1,0 +1,48 @@
+[package]
+name = "rustet-ui"
+description = "Rustet's own user interface, built with gpui."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# The page models (pages::model, route, pages::lyrics) and the player model views draw.
+rustet-app = { path = "../rustet-app" }
+rustet-desktop = { path = "../rustet-desktop" }
+# Music-video frames from the engine (video.rs).
+rustet-framering = { path = "../rustet-framering" }
+rustet-player = { path = "../rustet-player" }
+futures.workspace = true
+# The pin is in the root Cargo.toml.
+gpui.workspace = true
+gpui_platform = { workspace = true, features = ["wayland", "x11"] }
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2 = "0.11"
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+unicode-segmentation = "1"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+raw-window-handle = "0.6"
+x11rb = { version = "0.13", default-features = false }
+
+[features]
+# gpui's test platform for tests/views.rs: `cargo test -p rustet-ui --features test-support`.
+# Not a dev-dependency feature: Cargo would turn it on for the gallery example too, and gpui's
+# test mode (entity leak tracking) skews the example's measurements.
+test-support = ["gpui/test-support", "gpui_platform/test-support"]
+
+[dev-dependencies]
+# The gallery loads rustet-app's recorded responses through a local mock of Apple's API.
+rustet-ampapi = { path = "../rustet-ampapi" }
+anyhow.workspace = true
+tempfile = "3"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "tracing-log"] }

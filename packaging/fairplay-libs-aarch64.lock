@@ -1,0 +1,30 @@
+# Apple's Android FairPlay libraries for aarch64 (arm64-v8a), fetched at install time (they
+# cannot be redistributed with Rustet). Same format and rules as packaging/fairplay-libs-x86_64.lock (x86-64):
+# scripts/fetch-fairplay-libs.sh downloads each file from the first source that serves it and
+# refuses any file whose SHA-256 does not match. Both sources are the wrapper project's arm64
+# branch, pinned to one commit. The `arch` line makes the script refuse this list on another CPU.
+arch aarch64
+source https://raw.githubusercontent.com/WorldObservationLog/wrapper/c0a456f578212ef77d53aa2b5ad8cfdfe25a63c2/rootfs/system/lib64
+source https://raw.githubusercontent.com/silentone12725/wrapper/c0a456f578212ef77d53aa2b5ad8cfdfe25a63c2/rootfs/system/lib64
+689f421ab39ba103596344fea9bdd812d629f353b54afb39a73b417ddff7dbe1  libandroidappmusic.so
+9bd192dd48182c1e8e019cd0d01d5c61f8a11bdba1637aec58ca60705e296890  libBlocksRuntime.so
+af729ee868913bb298b7360939ba31865372222646edddcfa4ed9bca6484bf1c  libc++_shared.so
+659d21c18e2e3ea83621555227d7b931bf9db7c1a413caf10ee1fd4408ec7dee  libc.so
+9d5b557cf3faf88c34c394ab2cd7fc1a3b4acf3aed51f28cd0bc093858107c22  libCoreADI.so
+a8d4d7c30ede1622cb17c967b0a68c4f1ff07636134a5fd249efeb55d0fd86f1  libCoreFoundation.so
+e35e1b5de1cc796032da6bde5430148b0f0abb38c066059a19bfe0ad1a677b17  libCoreFP.so
+389aa1320e86c84001f7b28236dfa121600ff0c0fbec2b2e25682a83d4e6f4ea  libCoreLSKD.so
+c62b282f506ab7907b55316fcda3ce98e06f073cc756f98adafd20821ec570c5  libcurl.so
+77be633d55e0e766d58d083c746524a40ef251ec73f888686cf16658cba78519  libdaapkit.so
+f39be6e2d65b88805f7f11de59f4f95f9f98523bedf127dd15782804a60a0791  libdispatch.so
+917f6350cba18463f0fdd512592d3e5ba736d5e5280891a30cbb9194416edf37  libicudata_sv_apple.so
+087c7e2c13ced438e590c4bc63304ad3bab42c010a3ce476de0173de4e8cef1b  libicui18n_sv_apple.so
+2fe83aafab3425f6de62c2fda9fc98c8d1e4d545d2d952f0efef1a568489f41d  libicuuc_sv_apple.so
+2537da397e5417b925267cb62c313ce1f4b8ab62fd6989b0e8bdac7892051bc8  liblog.so
+e9dbef4b2902ca8da0c36c0b52a7fc8b4ab045308cbd1d03174286a8d142eccf  libm.so
+fc183df2222641fbf5799c21ccdec3356b7bc3d78fd824ccfdf653a2057a0122  libmedialibrarycore.so
+e1771933e161c6dda1eb252937e808b1d380b5f6da139131b5db1e938b1d6bfa  libmediaplatform.so
+a1a7bbaa275dea74aa7aef20ee53f77c2b607bd035cb6bf28d2daaf6b60e7e1e  libstdc++.so
+9b5f87a6b1309819edfdeb7e7b83fac8c07b998ccc19b29d1c0cbaafbc830058  libstoreservicescore.so
+511fab051cbb0123345fc0d8e4b703366d2783570c983ce122e1cb55138d4d0e  libxml2.so
+26f0f06e40b212bb55f17eb4df812438b3e993e6485f6267bdd4225d2dfda8e1  libz.so

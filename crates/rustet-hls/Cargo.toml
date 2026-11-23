@@ -1,0 +1,22 @@
+[package]
+name = "rustet-hls"
+description = "HLS master and media playlist parsing for Apple Music streams."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+regex = "1"
+reqwest.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true }
+tokio-util.workspace = true
+tracing.workspace = true
+url = "2"
+
+[dev-dependencies]
+proptest = "1"

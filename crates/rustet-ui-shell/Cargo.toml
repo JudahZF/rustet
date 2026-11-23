@@ -1,0 +1,34 @@
+[package]
+name = "rustet-ui-shell"
+description = "Rustet's main window: frame, rail, deck, queue, Now Playing, sign-in, windows and start-up."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+# The `video` scenario writes a test pattern into a frame ring.
+rustet-framering = { path = "../rustet-framering", optional = true }
+rustet-ampapi = { path = "../rustet-ampapi" }
+rustet-app = { path = "../rustet-app" }
+rustet-desktop = { path = "../rustet-desktop" }
+rustet-player = { path = "../rustet-player" }
+rustet-ui = { path = "../rustet-ui" }
+futures.workspace = true
+gpui.workspace = true
+gpui_platform = { workspace = true, features = ["wayland", "x11"] }
+reqwest.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+tracing-subscriber = { version = "0.3", default-features = false, features = ["ansi", "env-filter", "fmt", "std", "tracing-log"] }
+
+[features]
+# gpui's test platform for headless view tests: `cargo test -p rustet-ui-shell --features test-support`.
+test-support = ["gpui/test-support", "gpui_platform/test-support", "rustet-ui/test-support"]
+# `--scenario NAME`: scripted runs for screenshots and the AT-SPI check. Not in a release build.
+scenario = ["dep:rustet-framering"]

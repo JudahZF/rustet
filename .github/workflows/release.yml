@@ -1,0 +1,77 @@
+name: Release build
+
+# Manual only: builds the .run installer and the AppImage for x86-64 and aarch64 and keeps them as
+# workflow artifacts. With a tag, it also attaches them to a DRAFT release for that tag (created
+# if missing, with releases/<tag>.md as notes). Nothing is published automatically.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attach the packages to (empty = build only)
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Packages (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+            lfs: packaging/hybris-x86_64/libhybris-core.so,packaging/hybris-x86_64/hybris-linker/q.so,third_party/ffmpeg/**
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+            lfs: packaging/hybris-aarch64/libhybris-core.so,packaging/hybris-aarch64/hybris-linker/q.so
+    runs-on: ${{ matrix.runner }}
+    env:
+      # Ubuntu 24.04's glibc. libhybris needs 2.38, so older systems cannot run Rustet's FairPlay.
+      RUSTET_MAX_GLIBC: "2.39"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      # Only the LFS files this package uses: a full checkout spends the LFS bandwidth quota.
+      - name: Fetch libhybris and FFmpeg (Git LFS)
+        run: git lfs pull --include "${{ matrix.lfs }}"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build dependencies
+        run: |
+          sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential pkg-config cmake \
+            libfontconfig-dev libfreetype-dev libxkbcommon-dev libxkbcommon-x11-dev libxcb1-dev libwayland-dev \
+            libvlc-dev vlc-plugin-base vlc-plugin-video-output zstd patchelf zlib1g-dev dpkg-dev nasm curl
+          echo "RUSTET_VLC_LIBDIR=/usr/lib/${{ matrix.arch }}-linux-gnu" >> "$GITHUB_ENV"
+          echo "RUSTET_VLC_PLUGINS=/usr/lib/${{ matrix.arch }}-linux-gnu/vlc/plugins" >> "$GITHUB_ENV"
+      # VLC's avcodec/avformat plugins on 24.04 link Ubuntu's FFmpeg sonames; build that FFmpeg
+      # version from Ubuntu's source package, with only what the engine plays (bundle-vlc.sh).
+      - name: FFmpeg for VLC's plugins
+        run: |
+          scripts/build-vlc-ffmpeg.sh "$RUNNER_TEMP/vlc-ffmpeg"
+          echo "RUSTET_VLC_FFMPEG_LIBDIR=$RUNNER_TEMP/vlc-ffmpeg" >> "$GITHUB_ENV"
+      - name: Build the installer
+        run: scripts/build-installer.sh
+      - name: Build the AppImage
+        run: scripts/build-appimage.sh --skip-build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rustet-${{ matrix.arch }}
+          path: |
+            dist/rustet-*.run
+            dist/Rustet-*.AppImage
+          if-no-files-found: error
+      - name: Attach to a draft release
+        if: inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 \
+            || gh release create "$TAG" --draft --title "$TAG" --notes-file "releases/${TAG}.md"
+          gh release upload "$TAG" dist/rustet-*.run dist/Rustet-*.AppImage --clobber

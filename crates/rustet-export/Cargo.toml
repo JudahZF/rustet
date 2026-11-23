@@ -1,0 +1,39 @@
+[package]
+name = "rustet-export"
+description = "Track and music-video export: jobs, queue, tagging, filename templates."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rustet-ampapi = { path = "../rustet-ampapi" }
+rustet-core = { path = "../rustet-core" }
+rustet-diskcache = { path = "../rustet-diskcache" }
+rustet-playback = { path = "../rustet-playback" }
+async-trait.workspace = true
+dirs = "6"
+futures.workspace = true
+getrandom = "0.4"
+mp4ameta = "0.13"
+regex = "1"
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tempfile = "3"
+thiserror.workspace = true
+time = { version = "0.3", features = ["formatting", "serde"] }
+tokio.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+which = "8"
+
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1", features = ["fs", "process"] }
+
+[dev-dependencies]
+proptest = "1"
+tokio = { workspace = true, features = ["test-util"] }
