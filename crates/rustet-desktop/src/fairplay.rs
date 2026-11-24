@@ -16,8 +16,6 @@ use sha2::{Digest, Sha256};
 use tokio::io::AsyncBufReadExt;
 use tracing::{error, info, warn};
 
-/// The library whose presence means the set is installed.
-const MARKER_LIB: &str = "libandroidappmusic.so";
 /// Our stand-ins for Android system libraries, installed with Apple's.
 const STUBS: [&str; 3] = ["libandroid.so", "libOpenSLES.so", "libdl.so"];
 /// The largest library is about 14 MiB.
@@ -36,14 +34,15 @@ pub enum FetchOutcome {
     Failed,
 }
 
-/// Linux: runs `sh <script> --dest <lib64> --quiet` unless the libraries are there. The
-/// script's error output goes to the log.
+/// Linux: runs `sh <script> --dest <lib64> --quiet` unless every library in the lock beside
+/// the script (`fairplay-libs.lock`) and every stub is in `lib64`. The script's error output
+/// goes to the log.
 pub async fn ensure_fairplay_libs(lib64: &Path, script: &Path) -> FetchOutcome {
-    if lib64.join(MARKER_LIB).exists() {
-        return FetchOutcome::Present;
-    }
     if !script.exists() {
         return FetchOutcome::NoScript;
+    }
+    if libs_installed(lib64, &script.with_file_name("fairplay-libs.lock")) {
+        return FetchOutcome::Present;
     }
     info!("downloading the FairPlay libraries for lossless playback");
     let child = tokio::process::Command::new("sh")
@@ -78,6 +77,23 @@ pub async fn ensure_fairplay_libs(lib64: &Path, script: &Path) -> FetchOutcome {
             FetchOutcome::Failed
         }
     }
+}
+
+/// Whether every file the lock pins, and every stub, is in `lib64`. One file is not enough: a
+/// download that stops partway leaves the first libraries without their dependencies. The
+/// script moves a file in only after its checksum matched, so a present file is complete.
+fn libs_installed(lib64: &Path, lock_path: &Path) -> bool {
+    let Ok(text) = std::fs::read_to_string(lock_path) else {
+        return false;
+    };
+    let lock = parse_lock(&text);
+    !lock.entries.is_empty()
+        && lock
+            .entries
+            .iter()
+            .map(|(_, name)| name.as_str())
+            .chain(STUBS)
+            .all(|name| lib64.join(name).exists())
 }
 
 /// `fairplay-libs.lock`: download sources (`source https://…`) and the pinned files
@@ -359,8 +375,14 @@ mod tests {
             ensure_fairplay_libs(&lib64, &script).await,
             FetchOutcome::NoScript
         );
-        // The fake script installs the marker where --dest points, if called as the shell does.
-        std::fs::write(&script, "[ \"$1\" = --dest ] && [ \"$3\" = --quiet ] || exit 2\nmkdir -p \"$2\" && : > \"$2/libandroidappmusic.so\"\n").unwrap();
+        let h = "a".repeat(64);
+        std::fs::write(
+            d.path().join("fairplay-libs.lock"),
+            format!("{h}  libandroidappmusic.so\n{h}  libCoreFP.so\n"),
+        )
+        .unwrap();
+        // The fake script installs the set where --dest points, if called as the shell does.
+        std::fs::write(&script, "[ \"$1\" = --dest ] && [ \"$3\" = --quiet ] || exit 2\nmkdir -p \"$2\" && cd \"$2\" && touch libandroidappmusic.so libCoreFP.so libandroid.so libOpenSLES.so libdl.so\n").unwrap();
         assert_eq!(
             ensure_fairplay_libs(&lib64, &script).await,
             FetchOutcome::Installed
@@ -368,6 +390,12 @@ mod tests {
         assert_eq!(
             ensure_fairplay_libs(&lib64, &script).await,
             FetchOutcome::Present
+        );
+        // A download that stopped partway: the first library is there, a dependency is not.
+        std::fs::remove_file(lib64.join("libCoreFP.so")).unwrap();
+        assert_eq!(
+            ensure_fairplay_libs(&lib64, &script).await,
+            FetchOutcome::Installed
         );
         std::fs::write(&script, "echo broken >&2; exit 1\n").unwrap();
         assert_eq!(

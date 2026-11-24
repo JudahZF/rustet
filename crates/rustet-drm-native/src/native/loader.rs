@@ -161,8 +161,15 @@ impl Hybris {
 
         info!("loading libandroidappmusic.so");
         let Some(appmusic) = core.open(c"libandroidappmusic.so", libc::RTLD_NOW) else {
-            warn!("libandroidappmusic.so: load failed: {}", core.last_error());
-            return Err(Error::Backend("libandroidappmusic.so did not load".into()));
+            // The linker's reason (often a missing dependency) goes into the error, which the
+            // sign-in sheet shows: the log is often not kept.
+            let why = core.last_error();
+            warn!("libandroidappmusic.so: load failed: {why}");
+            return Err(Error::Backend(if why.is_empty() {
+                "libandroidappmusic.so did not load".into()
+            } else {
+                format!("libandroidappmusic.so did not load: {why}")
+            }));
         };
         info!("libandroidappmusic.so handle={:p}", appmusic.0);
         let nfc = core.sym(Some(appmusic), c"NfcRKVnxuKZy04KWbdFu71Ou");
